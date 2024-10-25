@@ -1,0 +1,73 @@
+name: Deploy Expo App to Firebase
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code từ repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Thiết lập Node.js phiên bản 20
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Cài đặt các dependencies cần thiết cho dự án
+      - name: Install dependencies
+        run: npm install
+
+         # Thiết lập biến môi trường REACT_APP_API_KEY
+      - name: Setup environment variables
+        run: echo "REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }}" >> $GITHUB_ENV
+
+      # Cài đặt EAS CLI để build ứng dụng Expo
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      # Cài đặt jq để xử lý JSON
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      # Build APK ứng dụng Android với Expo và EAS
+      - name: Build Android APK
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}  # Token cho EAS CLI
+          REACT_APP_API_KEY: ${{ secrets.REACT_APP_API_KEY }}  # Biến môi trường API_KEY
+        run: |
+          # Build ứng dụng Android với profile production
+          eas build -p android --profile production --non-interactive
+          
+          # Lấy URL của file APK từ kết quả build
+          APK_URL=$(eas build:list --status=finished --platform=android --limit=1 | grep -o 'https://expo.dev/artifacts/[^ ]*')
+          
+          # Kiểm tra xem URL có hợp lệ không
+          if [ -z "$APK_URL" ]; then
+            echo "Error: Could not retrieve APK URL."
+            exit 1
+          fi
+          
+          # Tải file APK về
+          echo "APK URL: $APK_URL"
+          wget -O my-app.apk "$APK_URL"
+
+      # Giải mã tài khoản dịch vụ Google từ GitHub Secrets
+      - name: Setup Firebase Service Account
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > firebase-credentials.json
+
+      # Upload APK lên Firebase App Distribution
+      - name: Upload APK to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}  # Firebase App ID của bạn
+          groups: testers                       # Nhóm testers sẽ nhận được ứng dụng
+          file: my-app.apk                      # Tên file APK đã tải về
+          serviceCredentialsFile: firebase-credentials.json  # Sử dụng tài khoản dịch vụ từ file đã giải mã

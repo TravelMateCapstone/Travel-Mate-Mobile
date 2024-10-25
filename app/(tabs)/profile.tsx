@@ -1,10 +1,10 @@
-import { Image, StyleSheet, ScrollView, Text } from 'react-native';
+import { ScrollView, Text, StyleSheet } from 'react-native';
 
-export default function HomeScreen() {
+export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container}>
       <Text>
-        Trang chủ
+        Hồ sơ
       </Text>
     </ScrollView>
   );

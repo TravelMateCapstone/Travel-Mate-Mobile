@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Travel-Mate-Mobile",
+    "name": "TravelMate",
     "slug": "Travel-Mate-Mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,7 +23,8 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ]
+      ],
+        "package": "com.travelmatemobile"
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +36,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "628171ff-2d7e-4740-8178-d765c1b00f8e"
+      }
+    },
+    "owner": "nhontdn2509"
   }
 }

@@ -1,5 +1,9 @@
 {
   "expo": {
+    "permissions": [
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION"
+    ],
     "name": "TravelMate",
     "slug": "Travel-Mate-Mobile",
     "version": "1.0.0",

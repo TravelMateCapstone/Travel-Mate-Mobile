@@ -1,17 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Keyboard, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // Import Picker component
-import { useRouter } from 'expo-router'; // Import the router hook from Expo Router
+import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
 
 export default function PlanTripScreen() {
     const [destination, setDestination] = useState('');
     const [filteredLocations, setFilteredLocations] = useState<string[]>([]);
-    const [days, setDays] = useState(''); // State for number of days
-    const [companions, setCompanions] = useState('Gia Đình'); // State for "Đi cùng"
-    const [budget, setBudget] = useState('Tiết kiệm'); // State for "Kinh phí"
-
+    const [days, setDays] = useState('');
+    const [companions, setCompanions] = useState('Gia Đình');
+    const [budget, setBudget] = useState('Tiết kiệm');
+    const [locations, setLocations] = useState<string[]>([]);
     const router = useRouter();
-    const locations = ['Paris', 'Papas', 'Hawaii', 'Japan', 'New York', 'London', 'Los Angeles'];
+
+    useEffect(() => {
+        fetch('https://provinces.open-api.vn/api/')
+            .then(response => response.json())
+            .then(data => {
+                const locationNames = data.map((location: any) => location.name);
+                setLocations(locationNames);
+            })
+            .catch(error => console.error('Error fetching locations:', error));
+    }, []);
 
     const handleDestinationChange = (text: string) => {
         setDestination(text);
@@ -32,10 +41,10 @@ export default function PlanTripScreen() {
     };
 
     const handleStartPlanning = () => {
-        const nights = days ? (parseInt(days) - 1).toString() : ''; // Calculate nights
+        const nights = days ? (parseInt(days) - 1).toString() : '';
 
         if (!destination || !days || !companions || !budget) {
-            alert('Vui lòng điền đầy đủ thông tin và đảm bảo rằng ngày kết thúc lớn hơn ngày bắt đầu.');
+            alert('Vui lòng điền đầy đủ thông tin.');
             return;
         }
 
@@ -53,14 +62,15 @@ export default function PlanTripScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.formContainer}>
+            <View style={styles.card}>
+                {/* Input for Destination */}
                 <View style={styles.inputWrapper}>
                     <TextInput
                         style={styles.input}
                         placeholder="Bạn muốn đi đâu?"
                         value={destination}
                         onChangeText={handleDestinationChange}
-                        placeholderTextColor="#aaa"
+                        placeholderTextColor="#bbb"
                     />
                     {filteredLocations.length > 0 && (
                         <FlatList
@@ -72,7 +82,6 @@ export default function PlanTripScreen() {
                                 </TouchableOpacity>
                             )}
                             style={styles.suggestionList}
-                            contentContainerStyle={{ flexGrow: 1 }}
                             keyboardShouldPersistTaps="handled"
                         />
                     )}
@@ -86,11 +95,11 @@ export default function PlanTripScreen() {
                         keyboardType="numeric"
                         value={days}
                         onChangeText={(text) => setDays(text)}
-                        placeholderTextColor="#aaa"
+                        placeholderTextColor="#bbb"
                     />
                 </View>
 
-                {/* Dropdown for "Đi cùng" */}
+                {/* Dropdown for Companions */}
                 <View style={styles.inputWrapper}>
                     <Text style={styles.label}>Đi cùng</Text>
                     <Picker
@@ -105,7 +114,7 @@ export default function PlanTripScreen() {
                     </Picker>
                 </View>
 
-                {/* Dropdown for "Kinh phí" */}
+                {/* Dropdown for Budget */}
                 <View style={styles.inputWrapper}>
                     <Text style={styles.label}>Kinh phí</Text>
                     <Picker
@@ -122,10 +131,6 @@ export default function PlanTripScreen() {
                 <TouchableOpacity style={styles.button} onPress={handleStartPlanning}>
                     <Text style={styles.buttonText}>Tạo kế hoạch</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={styles.buttonAI} onPress={handleStartPlanning}>
-                    <Text style={styles.buttonText}>Tạo bằng AI</Text>
-                </TouchableOpacity>
             </View>
         </View>
     );
@@ -134,28 +139,36 @@ export default function PlanTripScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f7f7f7',
-        padding: 10,
+        backgroundColor: '#eef2f3',
+        padding: 20,
     },
-    formContainer: {
-        marginTop: 15,
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    card: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
     },
     inputWrapper: {
-        position: 'relative',
         marginBottom: 20,
     },
     input: {
         fontSize: 16,
         borderWidth: 1,
         borderColor: '#ddd',
-        padding: 15,
+        padding: 12,
         borderRadius: 8,
-        backgroundColor: '#fff',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
+        backgroundColor: '#f9f9f9',
     },
     suggestionList: {
         borderColor: '#ccc',
@@ -164,56 +177,35 @@ const styles = StyleSheet.create({
         maxHeight: 150,
         marginTop: 5,
         backgroundColor: '#fff',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
     },
     suggestionItem: {
-        padding: 15,
+        padding: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
         fontSize: 16,
         color: '#555',
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#555',
+        marginBottom: 5,
+    },
+    picker: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        backgroundColor: '#f9f9f9',
     },
     button: {
         backgroundColor: '#4CAF50',
         padding: 15,
         alignItems: 'center',
         borderRadius: 8,
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-    },
-    buttonAI: {
-        backgroundColor: '#3b5998',
-        padding: 15,
-        alignItems: 'center',
-        borderRadius: 8,
-        marginBottom: 60,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
     },
     buttonText: {
         color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
-    },
-    label: {
-        fontSize: 16,
-        color: '#555',
-        marginBottom: 8,
-    },
-    picker: {
-        height: 50,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        backgroundColor: '#fff',
     },
 });

@@ -5,6 +5,7 @@ import * as Location from "expo-location";
 import { ref, set, onValue } from "firebase/database";
 import { database } from "../../firebaseConfig";
 import { MaterialIcons, FontAwesome, Ionicons, Entypo, AntDesign, Feather, EvilIcons, SimpleLineIcons, Octicons, Foundation } from '@expo/vector-icons';
+import { AppState } from "react-native";
 
 type UserLocation = {
   userId: string;
@@ -50,14 +51,14 @@ export default function TabTwoScreen() {
 
   useEffect(() => {
     let locationSubscription: Location.LocationSubscription | null = null;
-
+  
     const requestPermissionsAndTrackLocation = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Quyền truy cập vị trí đã bị từ chối.");
         return;
       }
-
+  
       locationSubscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
@@ -75,15 +76,25 @@ export default function TabTwoScreen() {
         }
       );
     };
-
+  
     requestPermissionsAndTrackLocation();
-
+  
+    // Theo dõi khi ứng dụng chuyển sang trạng thái nền (background) hoặc tắt
+    const appStateListener = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        // Xóa dữ liệu người dùng khỏi Firebase khi ứng dụng không còn hoạt động
+        set(ref(database, `locations/${userId}`), null);
+      }
+    });
+  
     return () => {
       if (locationSubscription) {
         locationSubscription.remove();
       }
+      appStateListener.remove(); // Xóa listener khi component bị hủy
     };
   }, [userId]);
+  
 
   useEffect(() => {
     const locationsRef = ref(database, "locations");

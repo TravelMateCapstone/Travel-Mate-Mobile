@@ -42,7 +42,6 @@ export default function TabTwoScreen() {
       locationSubscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
-          timeInterval: 5000,
           distanceInterval: 10,
         },
         (newLocation: Location.LocationObject) => {

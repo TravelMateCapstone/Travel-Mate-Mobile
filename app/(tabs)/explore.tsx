@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, Text, Dimensions, AppState } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { ref, set, onValue, remove } from "firebase/database";
 import { database } from "../../firebaseConfig";
-import { FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type UserLocation = {
   userId: string;
@@ -24,7 +24,7 @@ export default function TabTwoScreen() {
     const userNumber = parseInt(id.split("-")[1], 10);
     const colors = ["black", "red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "yellow"];
     const color = colors[userNumber % colors.length];
-    return require(`../../assets/images/favicon.png`);
+    return <MaterialIcons name="person-pin" size={24} color={color} />;
   };
 
 
@@ -41,8 +41,9 @@ export default function TabTwoScreen() {
 
       locationSubscription = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          distanceInterval: 10,
+          accuracy: Location.Accuracy.High, // Chọn độ chính xác cao
+          distanceInterval: 10, // Chỉ cập nhật nếu di chuyển ít nhất 10 mét
+          timeInterval: 10000, // Cập nhật mỗi 10 giây
         },
         (newLocation: Location.LocationObject) => {
           setLocation({
@@ -54,9 +55,13 @@ export default function TabTwoScreen() {
             latitude: newLocation.coords.latitude,
             longitude: newLocation.coords.longitude,
             timestamp: Date.now(),
-          }).catch((error) => {
-            console.error("Lỗi ghi dữ liệu Firebase:", error);
-          });
+          })
+            .then(() => {
+              console.log("Ghi dữ liệu Firebase thành công.");
+            })
+            .catch((error) => {
+              console.error("Lỗi ghi dữ liệu Firebase:", error);
+            });
         }
       );
     };
@@ -125,7 +130,6 @@ export default function TabTwoScreen() {
         <MapView
           ref={mapRef}
           style={styles.map}
-          provider={PROVIDER_GOOGLE}
           region={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -151,9 +155,9 @@ export default function TabTwoScreen() {
                   longitude: loc.longitude,
                 }}
                 title={loc.userId}
-                image={getUserIcon(loc.userId)} // Chuyển về image
-              />
-
+              >
+                {getUserIcon(loc.userId)}
+              </Marker>
             )
           ))}
         </MapView>

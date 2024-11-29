@@ -46,6 +46,7 @@ export default function TabTwoScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Quyền truy cập vị trí đã bị từ chối.");
+        console.warn("Không thể cấp quyền vị trí.");
         return;
       }
 
@@ -65,6 +66,8 @@ export default function TabTwoScreen() {
             latitude: newLocation.coords.latitude,
             longitude: newLocation.coords.longitude,
             timestamp: Date.now(),
+          }).catch((error) => {
+            console.error("Lỗi ghi dữ liệu Firebase:", error);
           });
         }
       );
@@ -93,32 +96,30 @@ export default function TabTwoScreen() {
   }, []);
 
   useEffect(() => {
-    if (mapRef.current && allLocations.length > 0 && initialFit) {
-      const coordinates = allLocations.map((loc: { latitude: any; longitude: any; }) => ({
+    if (mapRef.current && initialFit && location) {
+      const coordinates = allLocations.map((loc) => ({
         latitude: loc.latitude,
         longitude: loc.longitude,
       }));
 
-      if (location) {
-        coordinates.push({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-      }
-
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-        animated: true,
+      coordinates.push({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
       });
 
-      setInitialFit(false);
+      if (coordinates.length > 0) {
+        mapRef.current.fitToCoordinates(coordinates, {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
+        setInitialFit(false);
+      }
     }
   }, [allLocations, location, initialFit]);
 
   useEffect(() => {
     const appStateListener = AppState.addEventListener("change", (nextAppState: string) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
-        // Xóa vị trí của người dùng khỏi Firebase khi ứng dụng chuyển sang nền
         remove(ref(database, `locations/${userId}`));
       }
     });
@@ -143,7 +144,6 @@ export default function TabTwoScreen() {
             longitudeDelta: 0.01,
           }}
         >
-          {/* Marker của bạn */}
           <Marker
             coordinate={{
               latitude: location.coords.latitude,
@@ -151,9 +151,8 @@ export default function TabTwoScreen() {
             }}
             title="Bạn"
             description="Vị trí hiện tại của bạn"
-            image={require("../../assets/images/favicon.png")} // Biểu tượng của bạn
+            image={require("../../assets/images/favicon.png")}
           />
-          {/* Marker của tất cả người dùng khác, không bao gồm chính bạn */}
           {allLocations.map((loc: { userId: string; latitude: any; longitude: any; }, index: any) => (
             loc.userId !== userId && (
               <Marker

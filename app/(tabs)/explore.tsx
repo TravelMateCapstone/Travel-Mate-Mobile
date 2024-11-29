@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, Text, Dimensions } from "react-native";
+import { StyleSheet, View, Text, Dimensions, AppState } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { ref, set, onValue } from "firebase/database";
+import { ref, set, onValue, remove } from "firebase/database";
 import { database } from "../../firebaseConfig";
-import { MaterialIcons, FontAwesome, Ionicons, Entypo, AntDesign, Feather, EvilIcons, SimpleLineIcons, Octicons, Foundation } from '@expo/vector-icons';
-import { AppState } from "react-native";
+import { FontAwesome } from '@expo/vector-icons';
 
 type UserLocation = {
   userId: string;
@@ -23,16 +22,7 @@ export default function TabTwoScreen() {
 
   const getUserIcon = (id: string) => {
     const icons = [
-      { component: MaterialIcons, name: "person" },
       { component: FontAwesome, name: "user-circle" },
-      { component: Ionicons, name: "person-circle" },
-      { component: Entypo, name: "user" },
-      { component: AntDesign, name: "user" },
-      { component: Feather, name: "user" },
-      { component: EvilIcons, name: "user" },
-      { component: SimpleLineIcons, name: "user" },
-      { component: Octicons, name: "person" },
-      { component: Foundation, name: "torso" },
     ];
     const colors = ["black", "red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "yellow"];
     const usedColors = new Set<string>();
@@ -51,22 +41,25 @@ export default function TabTwoScreen() {
 
   useEffect(() => {
     let locationSubscription: Location.LocationSubscription | null = null;
-  
+
     const requestPermissionsAndTrackLocation = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Quyền truy cập vị trí đã bị từ chối.");
         return;
       }
-  
+
       locationSubscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           timeInterval: 5000,
           distanceInterval: 10,
         },
-        (newLocation) => {
-          setLocation(newLocation);
+        (newLocation: Location.LocationObject) => {
+          setLocation({
+            ...newLocation,
+            timestamp: Date.now(),
+          });
           set(ref(database, `locations/${userId}`), {
             userId,
             latitude: newLocation.coords.latitude,
@@ -76,29 +69,19 @@ export default function TabTwoScreen() {
         }
       );
     };
-  
+
     requestPermissionsAndTrackLocation();
-  
-    // Theo dõi khi ứng dụng chuyển sang trạng thái nền (background) hoặc tắt
-    const appStateListener = AppState.addEventListener("change", (nextAppState) => {
-      if (nextAppState === "background" || nextAppState === "inactive") {
-        // Xóa dữ liệu người dùng khỏi Firebase khi ứng dụng không còn hoạt động
-        set(ref(database, `locations/${userId}`), null);
-      }
-    });
-  
+
     return () => {
       if (locationSubscription) {
         locationSubscription.remove();
       }
-      appStateListener.remove(); // Xóa listener khi component bị hủy
     };
   }, [userId]);
-  
 
   useEffect(() => {
     const locationsRef = ref(database, "locations");
-    const unsubscribe = onValue(locationsRef, (snapshot) => {
+    const unsubscribe = onValue(locationsRef, (snapshot: { val: () => any; }) => {
       const data = snapshot.val();
       if (data) {
         const locationsArray = Object.values(data) as UserLocation[];
@@ -111,7 +94,7 @@ export default function TabTwoScreen() {
 
   useEffect(() => {
     if (mapRef.current && allLocations.length > 0 && initialFit) {
-      const coordinates = allLocations.map((loc) => ({
+      const coordinates = allLocations.map((loc: { latitude: any; longitude: any; }) => ({
         latitude: loc.latitude,
         longitude: loc.longitude,
       }));
@@ -131,6 +114,19 @@ export default function TabTwoScreen() {
       setInitialFit(false);
     }
   }, [allLocations, location, initialFit]);
+
+  useEffect(() => {
+    const appStateListener = AppState.addEventListener("change", (nextAppState: string) => {
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        // Xóa vị trí của người dùng khỏi Firebase khi ứng dụng chuyển sang nền
+        remove(ref(database, `locations/${userId}`));
+      }
+    });
+
+    return () => {
+      appStateListener.remove();
+    };
+  }, [userId]);
 
   return (
     <View style={styles.container}>
@@ -157,18 +153,20 @@ export default function TabTwoScreen() {
             description="Vị trí hiện tại của bạn"
             image={require("../../assets/images/favicon.png")} // Biểu tượng của bạn
           />
-          {/* Marker của tất cả người dùng khác */}
-          {allLocations.map((loc, index) => (
-            <Marker
-              key={index}
-              coordinate={{
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-              }}
-              title={loc.userId}
-            >
-              {getUserIcon(loc.userId)}
-            </Marker>
+          {/* Marker của tất cả người dùng khác, không bao gồm chính bạn */}
+          {allLocations.map((loc: { userId: string; latitude: any; longitude: any; }, index: any) => (
+            loc.userId !== userId && (
+              <Marker
+                key={index}
+                coordinate={{
+                  latitude: loc.latitude,
+                  longitude: loc.longitude,
+                }}
+                title={loc.userId}
+              >
+                {getUserIcon(loc.userId)}
+              </Marker>
+            )
           ))}
         </MapView>
       ) : (

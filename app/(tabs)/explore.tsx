@@ -12,7 +12,7 @@ type UserLocation = {
   longitude: number;
 };
 
-export default function TabTwoScreen() {
+export default function explore() {
   const mapRef = useRef<MapView>(null);
   const [userId] = useState(`user-${Math.floor(Math.random() * 10000)}`);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);

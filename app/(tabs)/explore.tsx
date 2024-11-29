@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, Text, Dimensions, AppState } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import { ref, set, onValue, remove } from "firebase/database";
 import { database } from "../../firebaseConfig";
@@ -21,23 +21,12 @@ export default function TabTwoScreen() {
   const [initialFit, setInitialFit] = useState(true);
 
   const getUserIcon = (id: string) => {
-    const icons = [
-      { component: FontAwesome, name: "user-circle" },
-    ];
-    const colors = ["black", "red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "yellow"];
-    const usedColors = new Set<string>();
     const userNumber = parseInt(id.split("-")[1], 10);
-    const IconComponent = icons[userNumber % icons.length].component;
-    const iconName = icons[userNumber % icons.length].name;
-    let color = colors[userNumber % colors.length];
-
-    while (usedColors.has(color)) {
-      color = colors[Math.floor(Math.random() * colors.length)];
-    }
-    usedColors.add(color);
-
-    return <IconComponent name={iconName as any} size={24} color={color} />;
+    const colors = ["black", "red", "blue", "green", "purple", "orange", "brown", "pink", "gray", "yellow"];
+    const color = colors[userNumber % colors.length];
+    return require(`../../assets/images/favicon.png`);
   };
+
 
   useEffect(() => {
     let locationSubscription: Location.LocationSubscription | null = null;
@@ -137,6 +126,7 @@ export default function TabTwoScreen() {
         <MapView
           ref={mapRef}
           style={styles.map}
+          provider={PROVIDER_GOOGLE}
           region={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -162,9 +152,9 @@ export default function TabTwoScreen() {
                   longitude: loc.longitude,
                 }}
                 title={loc.userId}
-              >
-                {getUserIcon(loc.userId)}
-              </Marker>
+                image={getUserIcon(loc.userId)} // Chuyển về image
+              />
+
             )
           ))}
         </MapView>

@@ -32,38 +32,55 @@ export default function TabTwoScreen() {
     let locationSubscription: Location.LocationSubscription | null = null;
 
     const requestPermissionsAndTrackLocation = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setErrorMsg("Quyền truy cập vị trí đã bị từ chối.");
-        console.warn("Không thể cấp quyền vị trí.");
-        return;
-      }
-
-      locationSubscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High, // Chọn độ chính xác cao
-          distanceInterval: 10, // Chỉ cập nhật nếu di chuyển ít nhất 10 mét
-          timeInterval: 10000, // Cập nhật mỗi 10 giây
-        },
-        (newLocation: Location.LocationObject) => {
-          setLocation({
-            ...newLocation,
-            timestamp: Date.now(),
-          });
-          set(ref(database, `locations/${userId}`), {
-            userId,
-            latitude: newLocation.coords.latitude,
-            longitude: newLocation.coords.longitude,
-            timestamp: Date.now(),
-          })
-            .then(() => {
-              console.log("Ghi dữ liệu Firebase thành công.");
-            })
-            .catch((error) => {
-              console.error("Lỗi ghi dữ liệu Firebase:", error);
-            });
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          setErrorMsg("Quyền truy cập vị trí đã bị từ chối.");
+          console.warn("Không thể cấp quyền vị trí.");
+          return;
         }
-      );
+
+        locationSubscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High, // Chọn độ chính xác cao
+            distanceInterval: 10, // Chỉ cập nhật nếu di chuyển ít nhất 10 mét
+            timeInterval: 10000, // Cập nhật mỗi 10 giây
+          },
+          (newLocation: Location.LocationObject) => {
+            try {
+              setLocation((prevLocation) => {
+                if (
+                  prevLocation &&
+                  prevLocation.coords.latitude === newLocation.coords.latitude &&
+                  prevLocation.coords.longitude === newLocation.coords.longitude
+                ) {
+                  return prevLocation;
+                }
+                return {
+                  ...newLocation,
+                  timestamp: Date.now(),
+                };
+              });
+              set(ref(database, `locations/${userId}`), {
+                userId,
+                latitude: newLocation.coords.latitude,
+                longitude: newLocation.coords.longitude,
+                timestamp: Date.now(),
+              })
+                .then(() => {
+                  console.log("Ghi dữ liệu Firebase thành công.");
+                })
+                .catch((error) => {
+                  console.error("Lỗi ghi dữ liệu Firebase:", error);
+                });
+            } catch (error) {
+              console.error("Lỗi trong quá trình cập nhật vị trí:", error);
+            }
+          }
+        );
+      } catch (error) {
+        console.error("Lỗi trong quá trình yêu cầu quyền vị trí:", error);
+      }
     };
 
     requestPermissionsAndTrackLocation();
@@ -78,10 +95,14 @@ export default function TabTwoScreen() {
   useEffect(() => {
     const locationsRef = ref(database, "locations");
     const unsubscribe = onValue(locationsRef, (snapshot: { val: () => any; }) => {
-      const data = snapshot.val();
-      if (data) {
-        const locationsArray = Object.values(data) as UserLocation[];
-        setAllLocations(locationsArray);
+      try {
+        const data = snapshot.val();
+        if (data) {
+          const locationsArray = Object.values(data) as UserLocation[];
+          setAllLocations(locationsArray);
+        }
+      } catch (error) {
+        console.error("Lỗi trong quá trình lấy dữ liệu từ Firebase:", error);
       }
     });
 
@@ -111,11 +132,23 @@ export default function TabTwoScreen() {
   }, [allLocations, location, initialFit]);
 
   useEffect(() => {
-    const appStateListener = AppState.addEventListener("change", (nextAppState: string) => {
-      if (nextAppState === "background" || nextAppState === "inactive") {
-        remove(ref(database, `locations/${userId}`));
+    const handleAppStateChange = (nextAppState: string) => {
+      try {
+        if (nextAppState === "background" || nextAppState === "inactive") {
+          remove(ref(database, `locations/${userId}`))
+            .then(() => {
+              console.log("Dữ liệu Firebase đã được xóa khi ứng dụng chuyển sang nền.");
+            })
+            .catch((error) => {
+              console.error("Lỗi trong quá trình xóa dữ liệu Firebase:", error);
+            });
+        }
+      } catch (error) {
+        console.error("Lỗi trong quá trình xử lý thay đổi trạng thái ứng dụng:", error);
       }
-    });
+    };
+
+    const appStateListener = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
       appStateListener.remove();

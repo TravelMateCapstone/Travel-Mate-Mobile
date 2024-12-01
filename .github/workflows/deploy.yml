@@ -12,11 +12,11 @@ jobs:
     steps:
       # Checkout code từ repository
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Thiết lập Node.js phiên bản 20
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 

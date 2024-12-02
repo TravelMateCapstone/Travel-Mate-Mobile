@@ -21,6 +21,7 @@ export default function TabTwoScreen() {
   const [initialFit, setInitialFit] = useState(true);
 
   const getUserIcon = (id: string) => {
+    if (!id) return null; // Add this check
     const icons = [
       { component: FontAwesome, name: "user-circle" },
     ];

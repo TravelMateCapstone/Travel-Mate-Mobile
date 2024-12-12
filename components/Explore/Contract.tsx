@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Text, View, FlatList, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface Contract {
   id: string;
@@ -10,10 +11,6 @@ interface Contract {
   days: number;
 }
 
-interface State {
-  contracts: Contract[];
-}
-
 interface ContractProps {
   contract: Contract;
 }
@@ -21,11 +18,26 @@ interface ContractProps {
 const ContractItem: React.FC<ContractProps> = ({ contract }) => {
   return (
     <View style={styles.contractItem}>
-      <Text style={styles.contractName}>{contract.name}</Text>
-      <Text style={styles.contractDetail}>Trạng thái: {contract.status}</Text>
-      <Text style={styles.contractDetail}>Địa điểm: {contract.location}</Text>
-      <Text style={styles.contractDetail}>Ngày bắt đầu: {contract.startDate}</Text>
-      <Text style={styles.contractDetail}>Số ngày đi: {contract.days} ngày</Text>
+      <View style={styles.row}>
+        <Icon name="description" size={20} color="#4CAF50" style={styles.icon} />
+        <Text style={styles.contractName}>{contract.name}</Text>
+      </View>
+      <View style={styles.row}>
+        <Icon name="check-circle" size={18} color="#FF9800" style={styles.icon} />
+        <Text style={styles.contractDetail}>Trạng thái: {contract.status}</Text>
+      </View>
+      <View style={styles.row}>
+        <Icon name="location-on" size={18} color="#2196F3" style={styles.icon} />
+        <Text style={styles.contractDetail}>Địa điểm: {contract.location}</Text>
+      </View>
+      <View style={styles.row}>
+        <Icon name="event" size={18} color="#673AB7" style={styles.icon} />
+        <Text style={styles.contractDetail}>Ngày bắt đầu: {contract.startDate}</Text>
+      </View>
+      <View style={styles.row}>
+        <Icon name="today" size={18} color="#F44336" style={styles.icon} />
+        <Text style={styles.contractDetail}>Số ngày đi: {contract.days} ngày</Text>
+      </View>
     </View>
   );
 };
@@ -33,25 +45,32 @@ const ContractItem: React.FC<ContractProps> = ({ contract }) => {
 export default ContractItem;
 
 const styles = StyleSheet.create({
-    contractItem: {
-        padding: 16,
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 4,
-        elevation: 2,
-      },
-      contractName: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-      },
-      contractDetail: {
-        fontSize: 14,
-        color: '#555',
-        marginBottom: 3,
-      },
+  contractItem: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  icon: {
+    marginRight: 8,
+  },
+  contractName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  contractDetail: {
+    fontSize: 14,
+    color: '#555',
+  },
 });

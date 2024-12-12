@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import ContractItem from '../../components/Explore/Contract'; 
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TextInput,
+} from 'react-native';
+import ContractItem from '../../components/Explore/Contract';
 
 interface Contract {
   id: string;
@@ -13,6 +20,8 @@ interface Contract {
 
 interface State {
   contracts: Contract[];
+  filter: string;
+  searchQuery: string;
 }
 
 export default class Explore extends Component<{}, State> {
@@ -43,6 +52,16 @@ export default class Explore extends Component<{}, State> {
         days: 4,
       },
     ],
+    filter: 'Tất cả',
+    searchQuery: '',
+  };
+
+  setFilter = (filter: string) => {
+    this.setState({ filter });
+  };
+
+  setSearchQuery = (query: string) => {
+    this.setState({ searchQuery: query });
   };
 
   renderContractItem = ({ item }: { item: Contract }) => {
@@ -50,12 +69,59 @@ export default class Explore extends Component<{}, State> {
   };
 
   render() {
+    const { contracts, filter, searchQuery } = this.state;
+
+    const filteredContracts = contracts.filter((contract) => {
+      const matchesFilter =
+        filter === 'Tất cả' || contract.status === filter;
+      const matchesSearch =
+        contract.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.location.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesFilter && matchesSearch;
+    });
+
     return (
       <View style={styles.container}>
+
+        {/* Thanh tìm kiếm */}
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Tìm kiếm theo tên hoặc địa điểm..."
+          value={searchQuery}
+          onChangeText={this.setSearchQuery}
+        />
+
+        {/* Thanh bộ lọc */}
+        <View style={styles.filterContainer}>
+          {['Tất cả', 'Đang xử lý', 'Hoàn thành', 'Đã hủy'].map((status) => (
+            <TouchableOpacity
+              key={status}
+              style={[
+                styles.filterButton,
+                filter === status && styles.filterButtonActive,
+              ]}
+              onPress={() => this.setFilter(status)}
+            >
+              <Text
+                style={
+                  filter === status
+                    ? styles.filterButtonTextActive
+                    : styles.filterButtonText
+                }
+              >
+                {status}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Danh sách hợp đồng */}
         <FlatList
-          data={this.state.contracts}
+          data={filteredContracts}
           keyExtractor={(item) => item.id}
           renderItem={this.renderContractItem}
+          ItemSeparatorComponent={() => <View style={styles.divider} />}
         />
       </View>
     );
@@ -66,32 +132,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f5f5f5',
   },
-  header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  contractItem: {
-    padding: 16,
+  searchBar: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
   },
-  contractName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
   },
-  contractDetail: {
-    fontSize: 14,
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  filterButtonActive: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
+  },
+  filterButtonText: {
     color: '#555',
-    marginBottom: 3,
+    fontSize: 14,
+  },
+  filterButtonTextActive: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
   },
 });

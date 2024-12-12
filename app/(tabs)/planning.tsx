@@ -1,8 +1,6 @@
-import { TravelPlanCard } from '@/components/Plan/TravelPlanCard';
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
-
-
+import { FlatList, StyleSheet, TextInput, View } from 'react-native';
+import { TravelPlanCard } from '@/components/Plan/TravelPlanCard';
 
 export default function PlanningScreen() {
   const [travelPlans, setTravelPlans] = React.useState([
@@ -27,9 +25,15 @@ export default function PlanningScreen() {
       days: 4,
       image: 'https://via.placeholder.com/150',
     },
-  ])
+  ]);
 
-  const renderPlanItem = ({ item }: { item: { id: string; location: string; startDate: string; days: number; image: string } }) => (
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const filteredPlans = travelPlans.filter((plan) => {
+    return plan.location.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const renderPlanItem = ({ item }) => (
     <TravelPlanCard
       location={item.location}
       startDate={item.startDate}
@@ -40,8 +44,16 @@ export default function PlanningScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Thanh tìm kiếm */}
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Tìm kiếm địa điểm..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+
       <FlatList
-        data={travelPlans}
+        data={filteredPlans}
         renderItem={renderPlanItem}
         keyExtractor={(item) => item.id}
       />
@@ -54,5 +66,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 16,
+  },
+  searchInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 8,
+    paddingHorizontal: 8,
   },
 });

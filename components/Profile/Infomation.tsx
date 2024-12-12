@@ -1,19 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { List } from 'react-native-paper';
-
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { List, Button } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 // Bật LayoutAnimation cho Android
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 export default function Infomation() {
+  const navigation = useRouter();
   const [expanded, setExpanded] = useState(null);
 
   const handlePress = (section) => {
     // Áp dụng hiệu ứng khi mở/đóng Accordion
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(expanded === section ? null : section);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Xóa toàn bộ AsyncStorage
+      await AsyncStorage.clear();
+      // Điều hướng về trang đăng nhập
+      navigation.push('/'); // Replace để tránh người dùng quay lại bằng nút back
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -57,6 +71,11 @@ export default function Infomation() {
         <List.Item title="Danh sách bạn bè" />
         <List.Item title="Bạn bè gợi ý" />
       </List.Accordion>
+
+      <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>
+        Đăng xuất
+      </Button>
+
     </View>
   );
 }
@@ -71,5 +90,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#C8E6C9',
     marginVertical: 5,
     borderRadius: 8,
+  },
+  logoutButton: {
+    marginTop: 20,
+    backgroundColor: '#F44336',
   },
 });

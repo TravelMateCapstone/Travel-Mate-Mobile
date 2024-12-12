@@ -79,7 +79,7 @@ function CheckInButton() {
       disabled={loading} // Disable button while loading
     >
       <Text style={{ color: '#fff', fontWeight: 'bold' }}>
-        {loading ? 'Loading...' : 'Check-in'}
+        {loading ? 'Đang check-in' : 'Check-in'}
       </Text>
     </TouchableOpacity>
   );
@@ -116,41 +116,46 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen
-          name="index"
-          options={{
-            headerTitle: () => <LogoHeader title="Trang chủ" />,
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="explore"
-          options={{
-            headerTitle: () => <LogoHeader title="Khám phá" />,
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="planning"
-          options={{
-            headerTitle: () => <LogoHeader title="Lên kế hoạch" />,
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            headerTitle: () => <LogoHeader title="Hồ sơ" />,
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
-            ),
-          }}
-        />
+  name="index"
+  options={{
+    headerTitle: () => <LogoHeader title="Trang chủ" />,
+    tabBarLabel: 'Trang chủ', // Tiếng Việt cho tab
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+    ),
+  }}
+/>
+<Tabs.Screen
+  name="explore"
+  options={{
+    headerTitle: () => <LogoHeader title="Hợp đồng" />,
+    tabBarLabel: 'Hợp đồng', 
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+    ),
+  }}
+/>
+<Tabs.Screen
+  name="planning"
+  options={{
+    headerTitle: () => <LogoHeader title="Quản lí" />,
+    tabBarLabel: 'Quản lí', 
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} />
+    ),
+  }}
+/>
+<Tabs.Screen
+  name="profile"
+  options={{
+    headerTitle: () => <LogoHeader title="Hồ sơ" />,
+    tabBarLabel: 'Hồ sơ', // Tiếng Việt cho tab
+    tabBarIcon: ({ color, focused }) => (
+      <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
+    ),
+  }}
+/>
+
       </Tabs>
       <CheckInButton />
     </View>

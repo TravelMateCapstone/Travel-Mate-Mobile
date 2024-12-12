@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { StyleSheet, View, Text, Dimensions, AppState } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
@@ -14,11 +14,12 @@ type UserLocation = {
 
 export default function TabTwoScreen() {
   const mapRef = useRef<MapView>(null);
-  const [userId] = useState(`user-${Math.floor(Math.random() * 10000)}`);
+  const [userId, setUserId] = useState<string | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [allLocations, setAllLocations] = useState<UserLocation[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [initialFit, setInitialFit] = useState(true);
+  const router = useRouter();
 
   const getUserIcon = (id: string) => {
     const userNumber = parseInt(id.split("-")[1], 10);
@@ -29,6 +30,8 @@ export default function TabTwoScreen() {
 
 
   useEffect(() => {
+    if (!userId) return;
+
     let locationSubscription: Location.LocationSubscription | null = null;
 
     const requestPermissionsAndTrackLocation = async () => {
@@ -93,6 +96,8 @@ export default function TabTwoScreen() {
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
+
     const locationsRef = ref(database, "locations");
     const unsubscribe = onValue(locationsRef, (snapshot: { val: () => any; }) => {
       try {
@@ -107,7 +112,7 @@ export default function TabTwoScreen() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (mapRef.current && initialFit && location) {
@@ -154,6 +159,23 @@ export default function TabTwoScreen() {
       appStateListener.remove();
     };
   }, [userId]);
+
+  const markers = useMemo(() => {
+    return allLocations.map((loc: { userId: string; latitude: any; longitude: any; }, index: any) => (
+      loc.userId !== userId && (
+        <Marker
+          key={index}
+          coordinate={{
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          }}
+          title={loc.userId}
+        >
+          {getUserIcon(loc.userId)}
+        </Marker>
+      )
+    ));
+  }, [allLocations, userId, getUserIcon]);
 
   return (
     <View style={styles.container}>

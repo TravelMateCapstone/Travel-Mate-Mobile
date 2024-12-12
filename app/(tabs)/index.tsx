@@ -1,19 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, ScrollView, View, Text, Dimensions } from "react-native";
+import { StyleSheet, ScrollView, View, Text, Dimensions, TouchableOpacity } from "react-native";
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import axios from 'axios'; // Add axios for API calls
 
-const users = [
-  { id: 1, name: "Sơn Tùng", avatar: "https://danviet.mediacdn.vn/296231569849192448/2022/7/18/z3575814842290f4a344b1db566b37fa96b7a2550a9801-1658133352416631936514.jpg" },
-  { id: 2, name: "Mỹ Tâm", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-3.jpg" },
-  { id: 3, name: "Đông Nhi", avatar: "https://gcs.tripi.vn/public-tripi/tripi-feed/img/473769HfX/dong-nhi-53390.jpg" },
-  { id: 4, name: "Hồ Việt Hà", avatar: "https://cdn.tuoitre.vn/thumb_w/480/2020/3/14/ho-ngoc-ha-15841710491271934118165.jpg" },
-  { id: 5, name: "Hà Anh Tuấn", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-2.jpg" },
-  { id: 6, name: "Noo Phước Thịnh", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-4.jpg" },
-  { id: 7, name: "Hoàng Dũng", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-15.jpg" },
-  { id: 8, name: "Hòa Minzy", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-10.jpg" },
-  { id: 9, name: "Thùy Chi", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-7.jpg" },
-  { id: 10, name: "Phan Mạnh Quỳnh", avatar: "https://cdn-media.sforum.vn/storage/app/media/Van%20Pham/1/top-ca-si-viet-nam-8.jpg" },
-];
+// Define types for user and post
+interface User {
+  UserId: number;
+  FullName: string;
+  Profile?: {
+    Avatar?: string;
+  };
+}
+
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+}
 
 const carouselItems = [
   { id: 1, image: "https://t2.ex-cdn.com/crystalbay.com/resize/1860x570/files/news/2024/09/16/top-10-diem-den-dep-nhat-ha-giang-di-de-thay-thien-nhien-viet-nam-dep-dieu-ky-213528.jpg", caption: "Hà Giang" },
@@ -21,20 +25,34 @@ const carouselItems = [
   { id: 3, image: "https://vcdn1-dulich.vnecdn.net/2022/05/12/Hanoi2-1652338755-3632-1652338809.jpg?w=0&h=0&q=100&dpr=2&fit=crop&s=NxMN93PTvOTnHNryMx3xJw", caption: "TP Hà Nội" },
 ];
 
-const posts = [
+const posts: Post[] = [
   { id: 1, title: "Bài viết 1", content: "Nội dung bài viết 1" },
   { id: 2, title: "Bài viết 2", content: "Nội dung bài viết 2" },
   { id: 3, title: "Bài viết 3", content: "Nội dung bài viết 3" },
 ];
 
 export default function HomeScreen() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [users, setUsers] = useState<User[]>([]); // Ensure initial state is an empty array
   const carouselRef = useRef<ScrollView>(null);
+  const router = useRouter();
+
+  // Fetch users from API
+  useEffect(() => {
+    axios.get('https://travelmateapp.azurewebsites.net/odata/ApplicationUsers')
+      .then((response) => {
+        const data = response.data as { value: User[] };
+        setUsers(data.value || []); // Ensure response is always an array
+      })
+      .catch((error) => {
+        console.error('Error fetching users:', error);
+      });
+  }, []);
 
   // Function to automatically scroll to next item in the carousel every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex(prevIndex => {
+      setCurrentIndex((prevIndex) => {
         const nextIndex = (prevIndex + 1) % carouselItems.length; // Ensure infinite loop
         if (carouselRef.current) {
           carouselRef.current.scrollTo({ x: nextIndex * Dimensions.get("window").width, animated: true });
@@ -46,6 +64,15 @@ export default function HomeScreen() {
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, []);
+
+  const handleViewUser = (id: number) => {
+    router.push({
+      pathname: '../Local/LocalDetail',
+      params: {
+        id
+      },
+    });
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -69,12 +96,16 @@ export default function HomeScreen() {
 
       {/* User List */}
       <ScrollView horizontal pagingEnabled>
-        {users.map(user => (
-          <View key={user.id} style={styles.userContainer}>
-            <Image source={{ uri: user.avatar }} style={styles.avatar} />
-            <Text style={styles.username}>{user.name}</Text>
-          </View>
-        ))}
+        {users.length > 0 ? (
+          users.map(user => (
+            <TouchableOpacity key={user.UserId} style={styles.userContainer} onPress={() => handleViewUser(user.UserId)}>
+              <Image source={{ uri: user.Profile?.Avatar || 'default-avatar-url' }} style={styles.avatar} />
+              <Text style={styles.username}>{user.FullName}</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text>No users available</Text>
+        )}
       </ScrollView>
 
       {/* Post List */}

@@ -1,7 +1,7 @@
 import BackgroundHeader from '@/components/Index/BackgroundHeader';
 import Posts from '@/components/Index/Posts';
 import RecommendedSection from '@/components/Index/RecommendedSection';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ImageBackground,
   StyleSheet,
@@ -74,7 +74,25 @@ export default function HomeScreen() {
       ],
     },
   ]);
-  const [places, setPlaces] = useState(['Dubai', 'Maldives', 'Bali', 'Venice', 'London']);
+  const [places, setPlaces] = useState([]);
+
+  useEffect(() => {
+    fetch('https://travelmateapp.azurewebsites.net/api/BlockContract/get-top-location-details/8')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const formattedPlaces = data.data.$values.map((place: any) => ({
+            id: place.locationId,
+            name: place.locationName,
+            image: place.image,
+            description: place.description,
+            mapHtml: place.mapHtml,
+          }));
+          setPlaces(formattedPlaces);
+        }
+      })
+      .catch(error => console.error('Error fetching places:', error));
+  }, []);
 
   return (
     <ScrollView style={styles.container}>

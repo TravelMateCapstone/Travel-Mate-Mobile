@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { Text, View, FlatList, StyleSheet } from 'react-native';
+import { Text, View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
 interface Contract {
   id: string;
@@ -16,8 +17,13 @@ interface ContractProps {
 }
 
 const ContractItem: React.FC<ContractProps> = ({ contract }) => {
+  const navigation = useNavigation();
+
   return (
-    <View style={styles.contractItem}>
+    <TouchableOpacity 
+      style={styles.contractItem} 
+      onPress={() => navigation.navigate('ContractDetail', { contract })}
+    >
       <View style={styles.row}>
         <Icon name="description" size={20} color="#4CAF50" style={styles.icon} />
         <Text style={styles.contractName}>{contract.name}</Text>
@@ -38,7 +44,7 @@ const ContractItem: React.FC<ContractProps> = ({ contract }) => {
         <Icon name="today" size={18} color="#F44336" style={styles.icon} />
         <Text style={styles.contractDetail}>Số ngày đi: {contract.days} ngày</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -22,10 +22,14 @@ interface Tour {
 
 const PlaceDetails = () => {
   const params = useLocalSearchParams();
+  
 
   // Parse data from params
   const placeData = JSON.parse(params.placeData as string);
   const responseData: Tour[] = JSON.parse(params.responseData as string);
+
+  // Log the place image URL
+  console.log('Place Image URL:', placeData.image);
 
   return (
     <ScrollView style={styles.container}>
@@ -39,29 +43,34 @@ const PlaceDetails = () => {
       <Text style={styles.sectionTitle}>Các tour có sẵn:</Text>
 
       {/* Danh sách các tour */}
-      {responseData.map((tour) => (
-        <View key={tour.TourId} style={styles.tourCard}>
-          <Image source={{ uri: tour.TourImage }} style={styles.tourImage} />
-          <View style={styles.tourDetails}>
-            <Text style={styles.tourName}>{tour.TourName}</Text>
-            <Text style={styles.tourLocation}>📍 {tour.Location}</Text>
-            <Text style={styles.tourDescription} numberOfLines={3}>
-              {tour.TourDescription}
-            </Text>
-            <Text style={styles.tourPrice}>💰 {tour.Price.toLocaleString()} VND</Text>
-          </View>
-          <View style={styles.organizer}>
-            <Image
-              source={{ uri: tour.User.Profile.ImageUser }}
-              style={styles.organizerImage}
-            />
-            <View>
-              <Text style={styles.organizerName}>{tour.User.FullName}</Text>
-              <Text style={styles.organizerAddress}>{tour.User.Profile.Address}</Text>
+      {responseData.map((tour) => {
+        // Log the tour image URL
+        console.log('Tour Image URL:', tour.TourImage);
+
+        return (
+          <View key={tour.TourId} style={styles.tourCard}>
+            <Image source={{ uri: tour.TourImage }} style={styles.tourImage} />
+            <View style={styles.tourDetails}>
+              <Text style={styles.tourName}>{tour.TourName}</Text>
+              <Text style={styles.tourLocation}>📍 {tour.Location}</Text>
+              <Text style={styles.tourDescription} numberOfLines={3}>
+                {tour.TourDescription}
+              </Text>
+              <Text style={styles.tourPrice}>💰 {tour.Price.toLocaleString()} VND</Text>
+            </View>
+            <View style={styles.organizer}>
+              <Image
+                source={{ uri: tour.User.Profile.ImageUser }}
+                style={styles.organizerImage}
+              />
+              <View>
+                <Text style={styles.organizerName}>{tour.User.FullName}</Text>
+                <Text style={styles.organizerAddress}>{tour.User.Profile.Address}</Text>
+              </View>
             </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </ScrollView>
   );
 };

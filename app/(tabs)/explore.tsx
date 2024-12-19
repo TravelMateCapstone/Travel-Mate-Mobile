@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -8,6 +8,8 @@ import {
   TextInput,
 } from 'react-native';
 import ContractItem from '../../components/Explore/Contract';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 interface Contract {
   id: string;
@@ -18,115 +20,110 @@ interface Contract {
   days: number;
 }
 
-interface State {
-  contracts: Contract[];
-  filter: string;
-  searchQuery: string;
-}
+const Explore = () => {
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [filter, setFilter] = useState<string>('Tất cả');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const router = useRouter();
 
-export default class Explore extends Component<{}, State> {
-  state: State = {
-    contracts: [
-      {
-        id: '1',
-        name: 'Hợp đồng Du lịch Hà Nội',
-        status: 'Đang xử lý',
-        location: 'Hà Nội',
-        startDate: '2024-12-20',
-        days: 3,
-      },
-      {
-        id: '2',
-        name: 'Hợp đồng Du lịch Đà Nẵng',
-        status: 'Hoàn thành',
-        location: 'Đà Nẵng',
-        startDate: '2024-12-10',
-        days: 5,
-      },
-      {
-        id: '3',
-        name: 'Hợp đồng Du lịch Phú Quốc',
-        status: 'Đã hủy',
-        location: 'Phú Quốc',
-        startDate: '2024-12-15',
-        days: 4,
-      },
-    ],
-    filter: 'Tất cả',
-    searchQuery: '',
+  useEffect(() => {
+    fetchContracts();
+  }, []);
+
+  const fetchContracts = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const response = await fetch(`https://travelmateapp.azurewebsites.net/api/BlockContract/contracts-by-local/${userId}`);
+      const data = await response.json();
+      if (data.success) {
+        const contracts = data.data.$values.map((contract: any) => ({
+          id: contract.tourId,
+          name: contract.details.tourName,
+          status: contract.status,
+          location: contract.location,
+          startDate: contract.details.startDate,
+          days: contract.details.numberOfDays,
+          details: contract.details,
+        }));
+        setContracts(contracts);
+      } else {
+        console.error('Failed to fetch contracts:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching contracts:', error);
+    }
   };
 
-  setFilter = (filter: string) => {
-    this.setState({ filter });
-  };
-
-  setSearchQuery = (query: string) => {
-    this.setState({ searchQuery: query });
-  };
-
-  renderContractItem = ({ item }: { item: Contract }) => {
-    return <ContractItem contract={item} />;
-  };
-
-  render() {
-    const { contracts, filter, searchQuery } = this.state;
-
-    const filteredContracts = contracts.filter((contract) => {
-      const matchesFilter =
-        filter === 'Tất cả' || contract.status === filter;
-      const matchesSearch =
-        contract.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.location.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesFilter && matchesSearch;
+  const handleContractPress = (contract: Contract) => {
+    router.push({
+      pathname: '/ContractDetail',
+      params: { contract },
     });
+  };
 
+  const renderContractItem = ({ item }: { item: Contract }) => {
     return (
-      <View style={styles.container}>
-
-        {/* Thanh tìm kiếm */}
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Tìm kiếm theo tên hoặc địa điểm..."
-          value={searchQuery}
-          onChangeText={this.setSearchQuery}
-        />
-
-        {/* Thanh bộ lọc */}
-        <View style={styles.filterContainer}>
-          {['Tất cả', 'Đang xử lý', 'Hoàn thành', 'Đã hủy'].map((status) => (
-            <TouchableOpacity
-              key={status}
-              style={[
-                styles.filterButton,
-                filter === status && styles.filterButtonActive,
-              ]}
-              onPress={() => this.setFilter(status)}
-            >
-              <Text
-                style={
-                  filter === status
-                    ? styles.filterButtonTextActive
-                    : styles.filterButtonText
-                }
-              >
-                {status}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Danh sách hợp đồng */}
-        <FlatList
-          data={filteredContracts}
-          keyExtractor={(item) => item.id}
-          renderItem={this.renderContractItem}
-          ItemSeparatorComponent={() => <View style={styles.divider} />}
-        />
-      </View>
+      <TouchableOpacity onPress={() => handleContractPress(item)}>
+        <ContractItem contract={item} />
+      </TouchableOpacity>
     );
-  }
-}
+  };
+
+  const filteredContracts = contracts.filter((contract) => {
+    const matchesFilter =
+      filter === 'Tất cả' || contract.status === filter;
+    const matchesSearch =
+      (contract.name && contract.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (contract.location && contract.location.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return matchesFilter && matchesSearch;
+  });
+
+  return (
+    <View style={styles.container}>
+
+      {/* Thanh tìm kiếm */}
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Tìm kiếm theo tên hoặc địa điểm..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+
+      {/* Thanh bộ lọc */}
+      <View style={styles.filterContainer}>
+        {['Tất cả', 'Đang xử lý', 'Hoàn thành', 'Đã hủy'].map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[
+              styles.filterButton,
+              filter === status && styles.filterButtonActive,
+            ]}
+            onPress={() => setFilter(status)}
+          >
+            <Text
+              style={
+                filter === status
+                  ? styles.filterButtonTextActive
+                  : styles.filterButtonText
+              }
+            >
+              {status}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Danh sách hợp đồng */}
+      <FlatList
+        data={filteredContracts}
+        keyExtractor={(item) => item.id}
+        renderItem={renderContractItem}
+        ItemSeparatorComponent={() => <View style={styles.divider} />}
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -173,3 +170,5 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 });
+
+export default Explore;

@@ -1,37 +1,47 @@
-import { Text, View, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
+import { Text, View, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
+import { Stack } from 'expo-router';
 
-export const handleLogout = async (navigation) => {
+// Define types for the state
+interface LoginState {
+  username: string;
+  password: string;
+}
+
+interface DecodedToken {
+  [key: string]: string;
+}
+
+export const handleLogout = async (navigation: any) => {
   try {
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('userData');
-    navigation.push('/Auth/Login'); // Điều hướng sang màn hình Login
+    navigation.push('/Auth/Login'); // Navigate to the Login screen
   } catch (error) {
     console.error('Error clearing app data:', error);
   }
 };
 
-export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const Login = () => {
+  const [state, setState] = useState<LoginState>({ username: '', password: '' });
   const navigation = useRouter();
 
   const handleLogin = async () => {
     const url = 'https://travelmateapp.azurewebsites.net/api/Auth/login';
-  
-    if (!username || !password) {
+
+    if (!state.username || !state.password) {
       Alert.alert('Lỗi', 'Vui lòng nhập tên đăng nhập và mật khẩu');
       return;
     }
-  
+
     const body = {
-      username,
-      password,
+      username: state.username,
+      password: state.password,
     };
-  
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -40,22 +50,23 @@ export default function Login() {
         },
         body: JSON.stringify(body),
       });
-  
+
       if (response.ok) {
         const data = await response.json();
-  
-        // Loại bỏ tiền tố "Bearer " nếu tồn tại
+
+        // Remove "Bearer " prefix if exists
         const token = data.token.replace(/^Bearer\s+/i, '');
-  
-        // Giải mã token
-        const decodedToken = jwtDecode(token);
+
+        // Decode the token
+        const decodedToken: DecodedToken = jwtDecode(token);
         console.log(decodedToken);
-        // Lưu token và thông tin giải mã vào AsyncStorage
+
+        // Save the token and decoded user data to AsyncStorage
         await AsyncStorage.setItem('token', token);
         await AsyncStorage.setItem('userData', JSON.stringify(decodedToken));
-        console.log(decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']);
         await AsyncStorage.setItem('userId', decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']);
-        navigation.push('/(tabs)/'); // Điều hướng sang màn hình Home
+        
+        navigation.push('/(tabs)/'); // Navigate to the Home screen
       } else {
         const errorData = await response.json();
         Alert.alert('Thất bại', errorData.message || 'Đăng nhập thất bại');
@@ -65,45 +76,76 @@ export default function Login() {
       console.error('Error:', error);
     }
   };
+
+  const handleChange = (field: keyof LoginState, value: string) => {
+    setState((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Đăng Nhập</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Tên đăng nhập"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mật khẩu"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Button title="Đăng Nhập" onPress={handleLogin} />
-    </View>
+    <>
+      <Stack.Screen options={{ headerTitle: 'Đăng nhập' }} />
+      <View style={styles.container}>
+        <Text style={styles.title}>Đăng Nhập</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Tên đăng nhập"
+          value={state.username}
+          onChangeText={(text) => handleChange('username', text)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Mật khẩu"
+          secureTextEntry
+          value={state.password}
+          onChangeText={(text) => handleChange('password', text)}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Đăng Nhập</Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f0f4f7', // Light background color for better contrast
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+    color: '#333', // Dark text for readability
   },
   input: {
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    fontSize: 16,
+    backgroundColor: '#fff', // White input background
+  },
+  button: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#4CAF50', // Green color for the button
     borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
+
+export default Login;

@@ -46,42 +46,36 @@ const Explore = () => {
           details: contract.details,
         }));
         setContracts(contracts);
-      } else {
-        console.error('Failed to fetch contracts:', data.message);
       }
     } catch (error) {
       console.error('Error fetching contracts:', error);
+      setContracts([]); // Set contracts to an empty array if fetch fails
     }
   };
 
   const handleContractPress = (contract: Contract) => {
     router.push({
       pathname: '/ContractDetail',
-      params: { contract },
+      params: { contract: JSON.stringify(contract) },
     });
   };
 
-  const renderContractItem = ({ item }: { item: Contract }) => {
-    return (
-      <TouchableOpacity onPress={() => handleContractPress(item)}>
-        <ContractItem contract={item} />
-      </TouchableOpacity>
-    );
-  };
+  const renderContractItem = ({ item }: { item: Contract }) => (
+    <TouchableOpacity onPress={() => handleContractPress(item)}>
+      <ContractItem contract={item} />
+    </TouchableOpacity>
+  );
 
   const filteredContracts = contracts.filter((contract) => {
-    const matchesFilter =
-      filter === 'Tất cả' || contract.status === filter;
-    const matchesSearch =
+    const matchesFilter = filter === 'Tất cả' || contract.status === filter;
+    const matchesSearch = 
       (contract.name && contract.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (contract.location && contract.location.toLowerCase().includes(searchQuery.toLowerCase()));
-
     return matchesFilter && matchesSearch;
   });
 
   return (
     <View style={styles.container}>
-
       {/* Thanh tìm kiếm */}
       <TextInput
         style={styles.searchBar}
@@ -89,7 +83,6 @@ const Explore = () => {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-
       {/* Thanh bộ lọc */}
       <View style={styles.filterContainer}>
         {['Tất cả', 'Đang xử lý', 'Hoàn thành', 'Đã hủy'].map((status) => (
@@ -113,14 +106,17 @@ const Explore = () => {
           </TouchableOpacity>
         ))}
       </View>
-
       {/* Danh sách hợp đồng */}
-      <FlatList
-        data={filteredContracts}
-        keyExtractor={(item) => item.id}
-        renderItem={renderContractItem}
-        ItemSeparatorComponent={() => <View style={styles.divider} />}
-      />
+      {filteredContracts.length === 0 ? (
+        <Text style={styles.noContractsText}>Không có hợp đồng nào</Text>
+      ) : (
+        <FlatList
+          data={filteredContracts}
+          keyExtractor={(item) => item.id}
+          renderItem={renderContractItem}
+          ItemSeparatorComponent={() => <View style={styles.divider} />}
+        />
+      )}
     </View>
   );
 };
@@ -168,6 +164,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#ddd',
     marginVertical: 8,
+  },
+  noContractsText: {
+    textAlign: 'center',
+    color: '#555',
+    fontSize: 16,
+    marginTop: 20,
   },
 });
 

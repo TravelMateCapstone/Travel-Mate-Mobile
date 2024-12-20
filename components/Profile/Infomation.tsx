@@ -24,7 +24,7 @@ export default function Infomation() {
       // Xóa toàn bộ AsyncStorage
       await AsyncStorage.clear();
       // Điều hướng về trang đăng nhập
-      navigation.push('/'); // Replace để tránh người dùng quay lại bằng nút back
+      navigation.push('/authenticate'); // Replace để tránh người dùng quay lại bằng nút back
     } catch (error) {
       console.error('Error during logout:', error);
     }

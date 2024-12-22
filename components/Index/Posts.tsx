@@ -80,7 +80,7 @@ const Posts: React.FC<PostsProps> = ({ posts }) => {
     return (
         <View>
             <View style={styles.postsSection}>
-                <Text style={styles.sectionTitle}>Latest Posts</Text>
+                <Text style={styles.sectionTitle}>Bài viết mới nhất</Text>
                 {posts.map((post) => (
                     <View key={post.id} style={styles.postCard}>
                         <View style={styles.postHeader}>

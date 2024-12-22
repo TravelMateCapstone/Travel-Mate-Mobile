@@ -5,6 +5,7 @@ import * as Location from "expo-location";
 import { ref, set, onValue, remove } from "firebase/database";
 import { database } from "../../firebaseConfig";
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type UserLocation = {
   userId: string;
@@ -14,7 +15,7 @@ type UserLocation = {
 
 export default function ShareLocation() {
   const mapRef = useRef<MapView>(null);
-  const [userId] = useState(`user-${Math.floor(Math.random() * 10000)}`);
+  const [userId, setUserId] = useState<string | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [allLocations, setAllLocations] = useState<UserLocation[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -28,6 +29,23 @@ export default function ShareLocation() {
   };
 
   useEffect(() => {
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (storedUserId) {
+        setUserId(storedUserId);
+      } else {
+        const newUserId = `user-${Math.floor(Math.random() * 10000)}`;
+        await AsyncStorage.setItem('userId', newUserId);
+        setUserId(newUserId);
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     let locationSubscription: Location.LocationSubscription | null = null;
 
     const requestPermissionsAndTrackLocation = async () => {
@@ -71,10 +89,13 @@ export default function ShareLocation() {
       if (locationSubscription) {
         locationSubscription.remove();
       }
+      remove(ref(database, `locations/${userId}`));
     };
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
+
     const locationsRef = ref(database, "locations");
     const unsubscribe = onValue(locationsRef, (snapshot: { val: () => any; }) => {
       const data = snapshot.val();
@@ -85,7 +106,7 @@ export default function ShareLocation() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (mapRef.current && initialFit && location) {
@@ -107,9 +128,11 @@ export default function ShareLocation() {
         setInitialFit(false);
       }
     }
-  }, [allLocations, location, initialFit]);
+  }, [allLocations, location, initialFit, userId]);
 
   useEffect(() => {
+    if (!userId) return;
+
     const appStateListener = AppState.addEventListener("change", (nextAppState: string) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
         remove(ref(database, `locations/${userId}`));

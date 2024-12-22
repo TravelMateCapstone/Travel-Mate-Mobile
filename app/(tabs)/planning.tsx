@@ -20,7 +20,7 @@ interface TravelPlan {
 export default function PlanningScreen() {
   const [travelPlans, setTravelPlans] = React.useState<TravelPlan[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const [selectedTab, setSelectedTab] = React.useState<number>(1); // Default to approved plans
+  const [selectedTab, setSelectedTab] = React.useState<number>(1); 
   const router = useRouter();
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function PlanningScreen() {
         }));
         setTravelPlans(tours);
       } catch (error) {
-        console.error('Error fetching travel plans:', error);
+        
       }
     };
 

@@ -35,14 +35,14 @@ export default function BackgroundHeader() {
       <View style={styles.overlay}>
         <Text style={styles.greeting}>Khám phá Việt Nam</Text>
         <Text style={styles.question}>Đồng hành cùng người địa phương</Text>
-        <View style={styles.searchBar}>
+        {/* <View style={styles.searchBar}>
           <TextInput
             placeholder="Bạn muốn đến..."
             style={styles.input}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-        </View>
+        </View> */}
         <SafeAreaView style={styles.flatStyle}>
           {searchQuery.length > 0 && (
             <ScrollView contentContainerStyle={styles.scrollView}>

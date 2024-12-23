@@ -11,8 +11,7 @@ export default function ProfileScreen() {
     switch (activeTab) {
       case 'Thông tin':
         return <Infomation />;
-      case 'Tìm bạn':
-        return <FindFriend />;
+     
       case 'Chia sẻ vị trí': 
         return <ShareLocation />;
       default:
@@ -31,9 +30,6 @@ export default function ProfileScreen() {
       <View style={styles.tabsContainer}>
         <TouchableOpacity onPress={() => setActiveTab('Thông tin')}>
           <Text style={[styles.tab, activeTab === 'Thông tin' && styles.activeTab]}>Thông tin</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Tìm bạn')}>
-          <Text style={[styles.tab, activeTab === 'Tìm bạn' && styles.activeTab]}>Tìm bạn</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setActiveTab('Chia sẻ vị trí')}>
           <Text style={[styles.tab, activeTab === 'Chia sẻ vị trí' && styles.activeTab]}>Chia sẻ vị trí</Text>

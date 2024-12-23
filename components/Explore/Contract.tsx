@@ -8,8 +8,7 @@ interface Contract {
   name: string;
   status: string;
   location: string;
-  startDate: string;
-  days: number;
+  createdAt: string;
 }
 
 interface ContractProps {
@@ -24,10 +23,7 @@ const ContractItem: React.FC<ContractProps> = ({ contract }) => {
       style={styles.contractItem} 
       onPress={() => navigation.navigate('ContractDetail', { contract })}
     >
-      <View style={styles.row}>
-        <Icon name="description" size={20} color="#4CAF50" style={styles.icon} />
-        <Text style={styles.contractName}>{contract.name}</Text>
-      </View>
+      
       <View style={styles.row}>
         <Icon name="check-circle" size={18} color="#FF9800" style={styles.icon} />
         <Text style={styles.contractDetail}>Trạng thái: {contract.status}</Text>
@@ -36,14 +32,7 @@ const ContractItem: React.FC<ContractProps> = ({ contract }) => {
         <Icon name="location-on" size={18} color="#2196F3" style={styles.icon} />
         <Text style={styles.contractDetail}>Địa điểm: {contract.location}</Text>
       </View>
-      <View style={styles.row}>
-        <Icon name="event" size={18} color="#673AB7" style={styles.icon} />
-        <Text style={styles.contractDetail}>Ngày bắt đầu: {contract.startDate}</Text>
-      </View>
-      <View style={styles.row}>
-        <Icon name="today" size={18} color="#F44336" style={styles.icon} />
-        <Text style={styles.contractDetail}>Số ngày đi: {contract.days} ngày</Text>
-      </View>
+     
     </TouchableOpacity>
   );
 };

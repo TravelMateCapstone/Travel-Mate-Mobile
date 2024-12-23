@@ -14,66 +14,10 @@ import {
   Modal,
   TouchableWithoutFeedback
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      user: 'John Doe',
-      avatar: 'https://via.placeholder.com/50',
-      content: 'Exploring the beautiful beaches of Bali!',
-      images: [
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-      ],
-    },
-    {
-      id: 2,
-      user: 'Jane Smith',
-      avatar: 'https://via.placeholder.com/50',
-      content: 'Had an amazing trip to the Eiffel Tower!',
-      images: ['https://via.placeholder.com/600x400'],
-    },
-    {
-      id: 3,
-      user: 'Chris Lee',
-      avatar: 'https://via.placeholder.com/50',
-      content: 'The food in Tokyo is out of this world!',
-      images: [
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-      ],
-    },
-    {
-      id: 4,
-      user: 'John Doe',
-      avatar: 'https://via.placeholder.com/50',
-      content: 'Exploring the beautiful beaches of Bali!',
-      images: [
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-      ],
-    },
-    {
-      id: 5,
-      user: 'John Doe',
-      avatar: 'https://via.placeholder.com/50',
-      content: 'Exploring the beautiful beaches of Bali!',
-      images: [
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-        'https://via.placeholder.com/600x400',
-      ],
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
   const [places, setPlaces] = useState([]);
 
   useEffect(() => {
@@ -92,6 +36,41 @@ export default function HomeScreen() {
         }
       })
       .catch(error => console.error('Error fetching places:', error));
+  }, []);
+
+  useEffect(() => {
+    const fetchUserIdAndPosts = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (userId !== null) {
+          fetch(`https://travelmateapp.azurewebsites.net/api/PastTripPost?userId=${userId}`)
+            .then(response => response.json())
+            .then(data => {
+              const formattedPosts = data.$values.map((post: any) => ({
+                id: post.id,
+                user: post.travelerName,
+                avatar: post.travelerAvatar,
+                content: post.caption,
+                images: post.tripImages.$values,
+                location: post.location,
+                createdAt: post.createdAt,
+                comments: post.comment ? post.comment.$values : [],
+                local: {
+                  id: post.localId,
+                  name: post.localName,
+                  avatar: post.localAvatar,
+                },
+              }));
+              setPosts(formattedPosts);
+            })
+            .catch(error => console.error('Error fetching posts:', error));
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    fetchUserIdAndPosts();
   }, []);
 
   return (
